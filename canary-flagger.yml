@@ -1,0 +1,38 @@
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: appv1
+  namespace: istio-test
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: appv1
+  progressDeadlineSeconds: 60
+  service:
+    port: 80
+    gateways:
+    - public-gateway.istio-system.svc.cluster.local
+    hosts:
+    - app.example.com
+    trafficPolicy:
+      tls:
+        mode: DISABLE
+    retries:
+      attempts: 3
+      perTryTimeout: 1s
+      retryOn: "gateway-error,connect-failure,refused-stream"
+  analysis:
+    interval: 1m
+    threshold: 5
+    maxWeight: 100
+    stepWeight: 10
+    metrics:
+    - name: request-success-rate
+      thresholdRange:
+        min: 99
+      interval: 1m
+    - name: request-duration
+      thresholdRange:
+        max: 500
+      interval: 30s
